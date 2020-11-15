@@ -173,13 +173,13 @@ struct Node {
         }
     }
     int query (int l, int r, int ql, int qr) {
-        if (l <= ql && r <= qr) {
+        if (ql <= l && r <= qr) {
             return sum;
         } else if (r < ql || l > qr) {
             return 0;
         } else {
             int m = l + r >> 1;
-            return lc->query(l, m, ql, qr) + query(m + 1, r, ql, qr);
+            return lc->query(l, m, ql, qr) + rc->query(m + 1, r, ql, qr);
         }
     }
 };
@@ -209,8 +209,6 @@ int search (int l, int r, F test) { // 111[1]00
 }
 //END-LIB:
 
-const int N = 1e5;
-
 int main () {
     cin.tie(nullptr);
     ios_base::sync_with_stdio(false);
@@ -230,24 +228,24 @@ int main () {
     for (int i = 0; i < m; i++) {
         int u, l, r;
         cin >> u >> l >> r;
-        int k = search(0, bl.lvl[u], [&] (k) {
+        int k = search(0, bl.lvl[u], [&] (int k) {
             return age[bl.lift(u, k).anc] <= r;
         });
         int a = bl.lift(u, k).anc;
         qrs.emplace_back(l, a);
     }
     sort(all(qrs));
-    vector<Node*> tree(1, build(0, N));
+    vector<Node*> tree(m + 1, nullptr);
+    tree[0] = build(1, n);
     for (int i = 1; i <= m; i++) {
-        tree[i] = tree[i]->update(0, N, hld.pre[qrs[i].se]);
+        tree[i] = tree[i - 1]->update(1, n, hld.pre[qrs[i - 1].se]);
     }
     for (int u = 1; u <= n; u++) {
-        int ans = 0;
-        for (auto [l, r] : hld.pathRanges(u, 1)) {
-            int k = search(0, m - 1, [&] (int k) {
-                return qrs[k].se <= ;
-            });
-            ans = tree[k].query(0, N, 0, qrs[k].fi);
+        int ans = 0, k = 1 + search(0, m - 1, [&] (int k) {
+            return qrs[k].fi <= age[u];
+        }); 
+        for (auto [ql, qr] : hld.pathRanges(u, 1)) {
+            ans += tree[k]->query(1, n, ql, qr);
         }
         cout << ans << ' ';
     }
